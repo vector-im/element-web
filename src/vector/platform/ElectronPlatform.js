@@ -26,6 +26,7 @@ import Promise from 'bluebird';
 import rageshake from 'matrix-react-sdk/lib/rageshake/rageshake';
 
 const ipcRenderer = window.ipcRenderer;
+const globalKeybindings = {};
 
 function platformFriendlyName(): string {
     // used to use window.process but the same info is available here
@@ -100,6 +101,25 @@ export default class ElectronPlatform extends VectorBasePlatform {
 
         this.startUpdateCheck = this.startUpdateCheck.bind(this);
         this.stopUpdateCheck = this.stopUpdateCheck.bind(this);
+
+        ipcRenderer.on('keybinding-pressed', (event, keybindName) => {
+            // Prevent holding down a shortcut meaning multiple presses
+            if (globalKeybindings[keybindName].pressed) {
+                return;
+            }
+            globalKeybindings[keybindName].pressed = true;
+
+            // Run the callback
+            globalKeybindings[keybindName].callback();
+        });
+
+        ipcRenderer.on('keybinding-released', (event, keybindName) => {
+            // Keybinding is no longer pressed
+            globalKeybindings[keybindName].pressed = false;
+
+            // Run the callback
+            globalKeybindings[keybindName].releaseCallback();
+        });
     }
 
     async getConfig(): Promise<{}> {
@@ -225,6 +245,49 @@ export default class ElectronPlatform extends VectorBasePlatform {
         ipcRenderer.send('check_updates');
     }
 
+    startListeningKeys() {
+        // Tell iohook to start listening for key events
+        ipcRenderer.send('start-listening-keys');
+    }
+
+    stopListeningKeys() {
+        // Tell iohook to stop listening for key events
+        ipcRenderer.send('stop-listening-keys');
+    }
+
+    onKeypress(self: any, callback: (ev, event) => void) {
+        ipcRenderer.on('keypress', callback);
+    }
+
+    removeOnKeypress(self: any, callback: (ev, event) => void) {
+        ipcRenderer.removeListener('keypress', callback);
+    }
+
+    onWindowBlurred(callback: () => void) {
+        // Callback to run on window blur (window loses focus)
+        ipcRenderer.on('window-blurred', callback);
+    }
+
+    addGlobalKeybinding(keybindName: string, keybindCode: string, callback: () => void, releaseCallback: () => void) {
+        // Add a keybinding that works even when the app is minimized
+        const keybinding = {name: keybindName, code: keybindCode};
+
+        ipcRenderer.send('register-keybinding', keybinding);
+        globalKeybindings[keybindName] = {callback, releaseCallback};
+
+        console.warn("Adding global keybinding:", keybindName, "with code:", keybindCode);
+    }
+
+    removeGlobalKeybinding(keybindName: string, keybindCode: string) {
+        // Unbind a global keybinding
+        ipcRenderer.send('unregister-keybinding', keybindCode);
+
+        // Remove the callback
+        delete globalKeybindings[keybindName];
+
+        console.warn("Removing global keybinding:", keybindName);
+    }
+
     installUpdate() {
         // IPC to the main process to install the update, since quitAndInstall
         // doesn't fire the before-quit event so the main process needs to know
@@ -259,7 +322,7 @@ export default class ElectronPlatform extends VectorBasePlatform {
         const ipcCallId = ++this._nextIpcCallId;
         return new Promise((resolve, reject) => {
             this._pendingIpcCalls[ipcCallId] = {resolve, reject};
-            window.ipcRenderer.send('ipcCall', {id: ipcCallId, name, args});
+            ipcRenderer.send('ipcCall', {id: ipcCallId, name, args});
             // Maybe add a timeout to these? Probably not necessary.
         });
     }

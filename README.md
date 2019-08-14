@@ -141,7 +141,14 @@ package for 64 bit Linux:
  1. Follow the instructions in 'Building From Source' above
  2. `node_modules/.bin/build -l --x64`
 
-All Electron packages go into `electron_app/dist/`
+All electron packages go into `electron_app/dist/`.
+
+Electron Specific Features
+--------------------------
+
+The electron version of Riot contains some features that are only possible from electron rather than within a browser window. This includes the "Push-to-Talk" feature, which allows you to toggle your microphone during a call even if Riot is not in focus.
+
+This requires the use of a native node module called [iohook](https://github.com/matrix-org/iohook/). Native node modules are written in C, and by default during the build of Riot the compiled binaries will be downloaded from npm. If you would like to build this module from source yourself, please read [Compiling iohook](docs/native-node-modules.md#compiling-iohook).
 
 Many thanks to @aviraldg for the initial work on the Electron integration.
 

@@ -30,6 +30,7 @@ const argv = require('minimist')(process.argv, {
 const {app, ipcMain, powerSaveBlocker, BrowserWindow, Menu, autoUpdater, protocol} = require('electron');
 const AutoLaunch = require('auto-launch');
 const path = require('path');
+const ioHook = require('iohook');
 
 const tray = require('./tray');
 const vectorMenu = require('./vectormenu');
@@ -400,6 +401,13 @@ app.on('ready', () => {
             return false;
         }
     });
+    mainWindow.on('blur', () => {
+        // Stop recording keypresses if Riot loses focus
+        // Used for Push-To-Talk, keypress recording only triggered when setting
+        // a global shortcut in Settings
+        mainWindow.webContents.send('window-blurred');
+        stopListeningKeys();
+    });
 
     if (process.platform === 'win32') {
         // Handle forward/backward mouse buttons in Windows
@@ -440,6 +448,92 @@ app.on('second-instance', (ev, commandLine, workingDirectory) => {
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
     }
+});
+
+// Counter for keybindings we have registered
+let ioHookTasks = 0;
+
+// Limit for amount of keybindings that can be
+// registered at once.
+const keybindingRegistrationLimit = 1;
+
+// Fires when a global keybinding is being registered
+ipcMain.on('register-keybinding', function(ev, keybinding) {
+    // Prevent registering more than the defined limit
+    if (ioHookTasks >= keybindingRegistrationLimit) {
+        ioHookTasks = keybindingRegistrationLimit;
+        return;
+    }
+
+    // Start listening for global keyboard shortcuts
+    if (ioHookTasks <= 0) {
+        ioHookTasks = 0;
+        ioHook.start();
+    }
+    ioHookTasks++;
+
+    ioHook.registerShortcut(keybinding.code, () => {
+        ev.sender.send('keybinding-pressed', keybinding.name);
+    }, () => {
+        ev.sender.send('keybinding-released', keybinding.name);
+    });
+});
+
+// Fires when a global keybinding is being unregistered
+ipcMain.on('unregister-keybinding', function(ev, keybindingCode) {
+    // Stop listening for global keyboard shortcuts if we're
+    // unregistering the last one
+    if (ioHookTasks <= 1) {
+        ioHook.stop();
+    }
+    ioHookTasks--;
+
+    ioHook.unregisterShortcutByKeys(keybindingCode);
+});
+
+// Tell renderer process what key was pressed
+// iohook has its own encoding for keys, so we can't just use a
+// listener in the renderer process to register iohook shortcuts
+let renderProcessID = null;
+const reportKeyEvent = function(keyEvent) {
+    // "this" is the renderer process because we call this method with .bind()
+    renderProcessID.sender.send('keypress', {
+        keydown: keyEvent.type == 'keydown',
+        keycode: keyEvent.keycode,
+    });
+};
+
+// Fires when listening on all keys
+// !!Security note: Ensure iohook is only allowed to listen to keybindings
+// when the browser window is in focus, else an XSS could lead to keylogging
+// Currently, this is achieved by leveraging browserWindow to act on focus loss
+ipcMain.on('start-listening-keys', function(ev, keybindingCode) {
+    // Start recording keypresses
+    if (ioHookTasks <= 0) {
+        ioHookTasks = 0;
+        ioHook.start();
+    }
+    ioHookTasks++;
+
+    renderProcessID = ev;
+    ioHook.on('keydown', reportKeyEvent);
+    ioHook.on('keyup', reportKeyEvent);
+});
+
+const stopListeningKeys = () => {
+    // Stop recording keypresses
+    ioHook.off('keydown', reportKeyEvent);
+    ioHook.off('keyup', reportKeyEvent);
+};
+
+ipcMain.on('stop-listening-keys', () => {
+    if (ioHookTasks <= 1) {
+        ioHookTasks = 1;
+        ioHook.stop();
+    }
+    ioHookTasks--;
+
+    stopListeningKeys();
 });
 
 // Set the App User Model ID to match what the squirrel
