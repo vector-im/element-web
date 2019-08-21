@@ -23,7 +23,8 @@
         "feature_pinning": "labs",
         "feature_custom_status": "labs",
         "feature_custom_tags": "labs",
-        "feature_state_counters": "labs"
+        "feature_state_counters": "labs",
+        "feature_bridge_errors": "labs"
     },
     "default_federate": true,
     "default_theme": "light",

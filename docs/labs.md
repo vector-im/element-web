@@ -45,3 +45,10 @@ Once enabled, send a custom state event to a room to set values:
 ```
 
 That's it. Now should see your new counter under the header.
+
+## Bridge errors (`feature_bridge_errors`)
+
+`feature_bridge_errors` shows errors from bridges in the room. These errors
+are emitted for an event when it couldn't be delivered to users bridged into
+the room. The feature is currently proposed as a MSC and will be subject to
+change.
