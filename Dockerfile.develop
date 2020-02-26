@@ -1,0 +1,46 @@
+FROM node:10-alpine
+
+# Support custom branches of the react-sdk and js-sdk. This also helps us build
+# images of riot-web develop.
+ARG USE_CUSTOM_SDKS=false
+ARG REACT_SDK_REPO="https://github.com/matrix-org/matrix-react-sdk.git"
+ARG REACT_SDK_BRANCH="master"
+ARG JS_SDK_REPO="https://github.com/matrix-org/matrix-js-sdk.git"
+ARG JS_SDK_BRANCH="master"
+
+# CRLF -> LF conversion
+RUN apk add --no-cache git dos2unix
+
+WORKDIR /riot
+
+# Install deps-only into separate Docker layer and run Riot when the container
+# starts, mount source as a volume and keep dev environment consistent
+COPY scripts /riot/scripts
+RUN dos2unix /riot/scripts/docker-link-repos.sh \
+    && sh /riot/scripts/docker-link-repos.sh
+
+# Cache package.json
+COPY src/header /riot/src/
+COPY package.json yarn.lock /riot/
+
+# Remove 'prepare' script because there is NO config in yarn and npm for
+# disabling it and is not necessary for development build
+RUN yarn --network-timeout=100000 install
+
+# Overlay src files with the original ones in case something was left out
+# from explicit copying above and doesn't work with mounting properly such as:
+#
+# "ERROR in Entry module not found: Error: Can't resolve './src' in '/riot'"
+# "ERROR in multi (webpack)-dev-server/client?http://0.0.0.0 ./src"
+COPY . /riot
+
+# Assemble entrypoint that copies the config at container start
+# and runs webpack server. Mount volume to /src/src for developing.
+RUN echo 'mkdir /riot/webapp' >> /entry.sh \
+    && echo 'cp /riot/config.sample.json /riot/webapp/config.json' >> /entry.sh \
+    && echo 'sh /riot/scripts/docker-link-repos.sh' >> /entry.sh \
+    && echo 'yarn start' >> /entry.sh \
+    && chmod +x /entry.sh
+
+# run webpack server to change the code on-the-go
+ENTRYPOINT /entry.sh

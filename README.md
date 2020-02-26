@@ -316,6 +316,72 @@ If any of these steps error with, `file table overflow`, you are probably on a m
 which has a very low limit on max open files. Run `ulimit -Sn 1024` and try again.
 You'll need to do this in each new terminal you open before building Riot.
 
+Using Docker image for development
+----------------------------------
+
+Avoids installation of Node, NPM and the rest of the environment by providing
+the same environment that's used in serving Riot via Dockerfile officially
+and at the same time allows to plug in the folder with source files so that
+you can edit outside of Docker container and let it compile inside where
+it is safely separated from your machine or any custom configuration.
+
+Note that hot-reloading via an open websocket might not work out of the box
+on Windows, check [WebPack ``watchOptions.poll``](https://webpack.js.org/configuration/watch/)
+as a workaround.
+
+Using this approach provides a reproducible environment between you and
+the maintainers if you share your changes in a pull request.
+
+Run it with:
+
+```bash
+# build image
+docker build --tag vectorim/riot-web:develop --file Dockerfile.develop .
+
+# remove old container or do nothing
+docker rm -f riot || true
+
+# run a new container with src folder mounted from git repository
+# located on the host machine. You can mount additional folders
+# such as res with additional --volume $PWD/res:/src/res
+docker run --interactive --tty \
+    --publish <port-on-host>:8080 \
+    --volume $PWD/src:/riot/src \
+    --name riot \
+    vectorim/riot-web:develop
+```
+
+And access ``yarn`` and other commands from inside of the container:
+
+```bash
+# run shell process from container
+docker exec -it riot sh
+
+# run yarn process from container
+docker exec -it riot yarn
+```
+
+In case you want to use own clones of
+[matrix-react-sdk](https://github.com/matrix-org/matrix-react-sdk)
+or
+[matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk)
+set additional environment variable ``USE_CUSTOM_SDKS`` in ``docker build``
+if it's a one-time operation. In case you want to use own clone and edit
+it at the same time as you edit ``riot-web``, set the environement
+variable in ``docker run`` command.
+
+```bash
+docker run --interactive --tty \
+    --publish <port-on-host>:8080 \
+    --volume $PWD/src:/riot/src \
+    --volume <path-to-matrix-js-sdk>:/riot/js-sdk \
+    --volume <path-to-matrix-react-sdk>:/riot/react-sdk \
+    --env USE_CUSTOM_SDKS=true \
+    --env NO_CLONE=true \
+    --name riot \
+    vectorim/riot-web:develop
+```
+
 Running the tests
 -----------------
 
