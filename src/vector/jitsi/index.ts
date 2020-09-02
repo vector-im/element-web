@@ -59,6 +59,7 @@ let widgetApi: WidgetApi;
         if (parentUrl && widgetId) {
             widgetApi = new WidgetApi(qsParam('parentUrl'), qsParam('widgetId'), [
                 Capability.AlwaysOnScreen,
+                Capability.ReceiveTerminate,
             ]);
             widgetApi.expectingExplicitReady = true;
         }
@@ -118,12 +119,25 @@ function joinConference() { // event handler bound in HTML
     if (avatarUrl) meetApi.executeCommand("avatarUrl", avatarUrl);
     if (userId) meetApi.executeCommand("email", userId);
 
-    meetApi.on("readyToClose", () => {
-        switchVisibleContainers();
+    const meetingClosed = new Promise(resolve => {
+        meetApi.on("readyToClose", () => {
+            switchVisibleContainers();
 
-        // noinspection JSIgnoredPromiseFromCall
-        if (widgetApi) widgetApi.setAlwaysOnScreen(false); // ignored promise because we don't care if it works
+            // noinspection JSIgnoredPromiseFromCall
+            if (widgetApi) widgetApi.setAlwaysOnScreen(false); // ignored promise because we don't care if it works
+            meetApi.dispose();
 
-        document.getElementById("jitsiContainer").innerHTML = "";
+            document.getElementById("jitsiContainer").innerHTML = "";
+
+            resolve();
+        });
+    });
+
+    widgetApi.once('terminate', (wait) => {
+        // Hangup before the client terminates the widget. Don't show
+        // the feedback dialog.
+        console.log("[Jitsi Widget] Client asks to terminate, hanging up");
+        meetApi.executeCommand("hangup", false);
+        wait(meetingClosed);
     });
 }
