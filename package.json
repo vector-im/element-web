@@ -63,6 +63,7 @@
     "matrix-widget-api": "^0.1.0-beta.13",
     "olm": "https://packages.matrix.org/npm/olm/olm-3.2.1.tgz",
     "prop-types": "^15.7.2",
+    "random-string": "^0.2.0",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "sanitize-html": "github:apostrophecms/sanitize-html#3c7f93f2058f696f5359e3e58d464161647226db",

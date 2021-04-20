@@ -77,6 +77,13 @@ Ban lists are rooms within Matrix, proposed as [MSC2313](https://github.com/matr
 [Mjolnir](https://github.com/matrix-org/mjolnir) is a set of moderation tools which support
 ban lists.
 
+## Inline widgets
+
+`feature_inline_widgets` allows rendering and sending of inline widgets. Inline
+widgets are typically polls or rich embedded content in rooms.
+
+[#riot-web:matrix.org]: https://matrix.to/#/#riot-web:matrix.org
+
 ## Verifications in DMs (`feature_dm_verification`)
 
 An implementation of [MSC2241](https://github.com/matrix-org/matrix-doc/pull/2241). When enabled, verification might not work with devices which don't support MSC2241.

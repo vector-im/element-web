@@ -52,6 +52,7 @@ module.exports = (env, argv) => {
             "mobileguide": "./src/vector/mobile_guide/index.js",
             "jitsi": "./src/vector/jitsi/index.ts",
             "usercontent": "./node_modules/matrix-react-sdk/src/usercontent/index.js",
+            "inline-widget-wrapper": "./src/vector/inline_widget_wrapper/index.js",
 
             // CSS themes
             "theme-legacy": "./node_modules/matrix-react-sdk/res/themes/legacy-light/css/legacy-light.scss",
@@ -341,7 +342,7 @@ module.exports = (env, argv) => {
                 // HtmlWebpackPlugin will screw up our formatting like the names
                 // of the themes and which chunks we actually care about.
                 inject: false,
-                excludeChunks: ['mobileguide', 'usercontent', 'jitsi'],
+                excludeChunks: ['mobileguide', 'usercontent', 'inline-widget-wrapper', 'jitsi'],
                 minify: argv.mode === 'production',
                 vars: {
                     og_image_url: ogImageUrl,
@@ -376,6 +377,13 @@ module.exports = (env, argv) => {
                 filename: 'static/incompatible-browser.html',
                 minify: argv.mode === 'production',
                 chunks: [],
+            }),
+
+            // This is an inline widget wrapper, similar to usercontent
+            new HtmlWebpackPlugin({
+                template: './src/vector/inline_widget_wrapper/index.html',
+                filename: 'inline_widget_wrapper/index.html',
+                chunks: ['inline-widget-wrapper'],
             }),
 
             // This is the usercontent sandbox's entry point (separate for iframing)
