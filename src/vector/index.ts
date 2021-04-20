@@ -28,16 +28,7 @@ require('katex/dist/katex.css');
 // These are things that can run before the skin loads - be careful not to reference the react-sdk though.
 import {parseQsFromFragment} from "./url_utils";
 import './modernizr';
-
-async function settled(...promises: Array<Promise<any>>) {
-    for (const prom of promises) {
-        try {
-            await prom;
-        } catch (e) {
-            console.error(e);
-        }
-    }
-}
+import {settled} from "./promise_utils";
 
 function checkBrowserFeatures() {
     if (!window.Modernizr) {
