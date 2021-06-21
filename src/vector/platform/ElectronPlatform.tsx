@@ -47,6 +47,7 @@ import {showToast as showUpdateToast} from "matrix-react-sdk/src/toasts/UpdateTo
 import {CheckUpdatesPayload} from "matrix-react-sdk/src/dispatcher/payloads/CheckUpdatesPayload";
 import ToastStore from "matrix-react-sdk/src/stores/ToastStore";
 import GenericExpiringToast from "matrix-react-sdk/src/components/views/toasts/GenericExpiringToast";
+import ElectronDownloadToast from "../../components/views/toasts/ElectronDownloadToast";
 
 const electron = window.electron;
 const isMac = navigator.platform.toUpperCase().includes('MAC');
@@ -249,24 +250,46 @@ export default class ElectronPlatform extends VectorBasePlatform {
             dis.fire(Action.ViewUserSettings);
         });
 
-        electron.on('userDownloadCompleted', (ev, {path, name}) => {
-            const onAccept = () => {
-                electron.send('userDownloadOpen', {path});
-            };
-
-            ToastStore.sharedInstance().addOrReplaceToast({
-                key: `DOWNLOAD_TOAST_${path}`,
-                title: _t("Download Completed"),
-                props: {
-                    description: name,
-                    acceptLabel: _t("Open"),
-                    onAccept,
-                    dismissLabel: _t("Dismiss"),
-                    numSeconds: 10,
-                },
-                component: GenericExpiringToast,
-                priority: 99,
-            });
+        electron.on("userDownload", (ev, {state, path, name, totalBytes, receivedBytes, begin}) => {
+            if (begin) {
+                ToastStore.sharedInstance().addOrReplaceToast({
+                    key: `DOWNLOAD_TOAST_${path}`,
+                    title: _t("Downloading..."),
+                    props: {
+                        downloadPath: path,
+                        receivedBytes,
+                        totalBytes,
+                        name,
+                    },
+                    component: ElectronDownloadToast,
+                    priority: 98,
+                });
+            } else if (state === "completed") {
+                ToastStore.sharedInstance().addOrReplaceToast({
+                    key: `DOWNLOAD_TOAST_${path}`,
+                    title: _t("Download Completed"),
+                    props: {
+                        description: name,
+                        acceptLabel: _t("Open"),
+                        onAccept: () => {
+                            electron.send("userDownload", {
+                                action: "download",
+                                path,
+                            });
+                        },
+                        dismissLabel: _t("Dismiss"),
+                        numSeconds: 10,
+                        onDismiss: () => {
+                            electron.send("userDownload", {
+                                action: "done",
+                                path,
+                            });
+                        },
+                    },
+                    component: GenericExpiringToast,
+                    priority: 99,
+                });
+            }
         });
 
         // register OS-specific shortcuts

@@ -30,8 +30,7 @@ type ElectronChannel =
     "seshatReply" |
     "setBadgeCount" |
     "update-downloaded" |
-    "userDownloadCompleted" |
-    "userDownloadOpen";
+    "userDownload";
 
 declare global {
     interface Window {
@@ -50,6 +49,7 @@ declare global {
 
     interface Electron {
         on(channel: ElectronChannel, listener: (event: Event, ...args: any[]) => void): void;
+        removeListener(event: ElectronChannel, listener: (...args: any[]) => void): void;
         send(channel: ElectronChannel, ...args: any[]): void;
     }
 
