@@ -47,6 +47,9 @@ import {showToast as showUpdateToast} from "matrix-react-sdk/src/toasts/UpdateTo
 import {CheckUpdatesPayload} from "matrix-react-sdk/src/dispatcher/payloads/CheckUpdatesPayload";
 import ToastStore from "matrix-react-sdk/src/stores/ToastStore";
 import GenericExpiringToast from "matrix-react-sdk/src/components/views/toasts/GenericExpiringToast";
+import { BreadcrumbsStore } from 'matrix-react-sdk/src/stores/BreadcrumbsStore';
+import { UPDATE_EVENT } from 'matrix-react-sdk/src/stores/AsyncStore';
+import { avatarUrlForRoom, getInitialLetter } from 'matrix-react-sdk/src/Avatar';
 
 const electron = window.electron;
 const isMac = navigator.platform.toUpperCase().includes('MAC');
@@ -303,7 +306,25 @@ export default class ElectronPlatform extends VectorBasePlatform {
         }
 
         this._ipcCall("startSSOFlow", this.ssoID);
+
+        if (isMac) {
+            BreadcrumbsStore.instance.on(UPDATE_EVENT, this.onBreadcrumbsUpdate);
+        }
     }
+
+    private onBreadcrumbsUpdate = () => {
+        const rooms = BreadcrumbsStore.instance.rooms.slice(0, 7).map(r => ({
+            roomId: r.roomId,
+            avatarUrl: avatarUrlForRoom(
+                r,
+                Math.floor(60 * window.devicePixelRatio),
+                Math.floor(60 * window.devicePixelRatio),
+                "crop",
+            ),
+            initial: getInitialLetter(r.name),
+        }));
+        this._ipcCall("breadcrumbs", rooms);
+    };
 
     async getConfig(): Promise<{}> {
         return this._ipcCall('getConfig');
