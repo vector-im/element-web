@@ -363,6 +363,10 @@ export default class ElectronPlatform extends VectorBasePlatform {
         return true;
     }
 
+    async isDoNotDisturbEnabled(): Promise<boolean> {
+        return this._ipcCall('getDoNotDisturbEnabled');
+    }
+
     displayNotification(title: string, msg: string, avatarUrl: string, room: Room): Notification {
         // GNOME notification spec parses HTML tags for styling...
         // Electron Docs state all supported linux notification systems follow this markup spec
