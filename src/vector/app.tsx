@@ -140,7 +140,7 @@ export async function loadApp(fragParams: {}) {
     (platform as VectorBasePlatform).startUpdater();
 
     // Don't bother loading the app until the config is verified
-    const config = await verifyServerConfig();
+    const config = await verifyServerConfig(fragParams);
 
     // Before we continue, let's see if we're supposed to do an SSO redirect
     const [userId] = await Lifecycle.getStoredSessionOwner();
@@ -175,7 +175,7 @@ export async function loadApp(fragParams: {}) {
     />;
 }
 
-async function verifyServerConfig() {
+async function verifyServerConfig(fragParams) {
     let validatedConfig;
     try {
         console.log("Verifying homeserver configuration");
@@ -189,48 +189,56 @@ async function verifyServerConfig() {
         // care if they are syntactically correct though, so we shove them through the .well-known
         // validators for that purpose.
 
+        let discoveryResult = null;
+
         const config = SdkConfig.get();
         let wkConfig = config['default_server_config']; // overwritten later under some conditions
-        const serverName = config['default_server_name'];
-        const hsUrl = config['default_hs_url'];
-        const isUrl = config['default_is_url'];
 
-        const incompatibleOptions = [wkConfig, serverName, hsUrl].filter(i => !!i);
-        if (incompatibleOptions.length > 1) {
-            // noinspection ExceptionCaughtLocallyJS
-            throw newTranslatableError(_td(
-                "Invalid configuration: can only specify one of default_server_config, default_server_name, " +
-                "or default_hs_url.",
-            ));
-        }
-        if (incompatibleOptions.length < 1) {
-            // noinspection ExceptionCaughtLocallyJS
-            throw newTranslatableError(_td("Invalid configuration: no default server specified."));
-        }
+        let serverName = null;
+        if (fragParams.serverName) {
+            serverName = fragParams.serverName;
+        } else {
+            serverName = config['default_server_name'];
+            const hsUrl = config['default_hs_url'];
+            const isUrl = config['default_is_url'];
 
-        if (hsUrl) {
-            console.log("Config uses a default_hs_url - constructing a default_server_config using this information");
-            console.warn(
-                "DEPRECATED CONFIG OPTION: In the future, default_hs_url will not be accepted. Please use " +
-                "default_server_config instead.",
-            );
-
-            wkConfig = {
-                "m.homeserver": {
-                    "base_url": hsUrl,
-                },
-            };
-            if (isUrl) {
-                wkConfig["m.identity_server"] = {
-                    "base_url": isUrl,
-                };
+            const incompatibleOptions = [wkConfig, serverName, hsUrl].filter(i => !!i);
+            if (incompatibleOptions.length > 1) {
+                // noinspection ExceptionCaughtLocallyJS
+                throw newTranslatableError(_td(
+                    "Invalid configuration: can only specify one of default_server_config, default_server_name, " +
+                    "or default_hs_url.",
+                ));
             }
-        }
+            if (incompatibleOptions.length < 1) {
+                // noinspection ExceptionCaughtLocallyJS
+                throw newTranslatableError(_td("Invalid configuration: no default server specified."));
+            }
 
-        let discoveryResult = null;
-        if (wkConfig) {
-            console.log("Config uses a default_server_config - validating object");
-            discoveryResult = await AutoDiscovery.fromDiscoveryConfig(wkConfig);
+            if (hsUrl) {
+                console.log("Config uses a default_hs_url - constructing a default_server_config using this " +
+                            "information");
+                console.warn(
+                    "DEPRECATED CONFIG OPTION: In the future, default_hs_url will not be accepted. Please use " +
+                    "default_server_config instead.",
+                );
+
+                wkConfig = {
+                   "m.homeserver": {
+                       "base_url": hsUrl,
+                   },
+                };
+                if (isUrl) {
+                    wkConfig["m.identity_server"] = {
+                       "base_url": isUrl,
+                    };
+                }
+            }
+
+            if (wkConfig) {
+                console.log("Config uses a default_server_config - validating object");
+                discoveryResult = await AutoDiscovery.fromDiscoveryConfig(wkConfig);
+            }
         }
 
         if (serverName) {
