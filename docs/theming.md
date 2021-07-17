@@ -65,8 +65,8 @@ eg. in config.json:
                     "timeline-text-color": "#2e2f32",
                     "timeline-text-secondary-color": "#61708b",
                     "timeline-highlights-color": "#f3f8fd",
-                    "username-colors": ["#ff0000", ...]
-                    "avatar-background-colors": ["#cc0000", ...]
+                    "username-colors": ["#ff0000"],
+                    "avatar-background-colors": ["#cc0000"]
                 }
             }, {
                 "name": "Deep Purple",
