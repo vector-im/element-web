@@ -50,7 +50,7 @@ export default class WebPlatform extends VectorBasePlatform {
      * notifications, otherwise false.
      */
     supportsNotifications(): boolean {
-        return Boolean(window.Notification);
+        return Boolean(window.Notification && window.self === window.top);
     }
 
     /**
