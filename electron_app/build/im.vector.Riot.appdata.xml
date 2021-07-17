@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+	<id>im.vector.Riot.desktop</id>
+	<metadata_license>Apache-2.0</metadata_license>
+	<project_license>Apache-2.0</project_license>
+	<name>Riot</name>
+	<url type="homepage">https://riot.im</url>
+	<url type="bugtracker">https://github.com/vector-im/riot-web/issues</url>
+	<summary>Client for the Matrix network</summary>
+	<description>
+		<p>
+			Riot allows teams to communicate across a wide range of
+			collaboration apps. If some team members use Riot while others
+			use IRC, Slack or Gitter, Riot will allow these team members to
+			seamlessly work together. Riot offers the richest network of
+			communication bridges.
+		</p>
+		<p>
+			Riot is built on top of Matrix. Matrix is an open network for
+			secure, decentralized communication delivering a community of
+			users, bridged networks, integrated bots and applications plus
+			full end-to-end encryption.
+		</p>
+	</description>
+	<categories>
+		<category>Network</category>
+		<category>Chat</category>
+		<category>InstantMessaging</category>
+		<category>VideoConference</category>
+	</categories>
+	<!-- TODO: Have at least one screenshot -->
+</component>

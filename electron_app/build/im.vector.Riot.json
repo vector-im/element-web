@@ -1,0 +1,64 @@
+{
+    "id": "im.vector.Riot",
+    "version": "stable",
+    "base": "io.atom.electron.BaseApp",
+    "base-version": "master",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "1.4",
+    "sdk": "org.freedesktop.Sdk",
+    "command": "riot-web",
+    "finish-args": [
+        "--device=dri",
+        "--filesystem=home",
+        "--filesystem=/tmp",
+        "--share=ipc",
+        "--share=network",
+        "--socket=pulseaudio",
+        "--socket=x11",
+        "--talk-name=org.freedesktop.Notifications"
+    ],
+    "modules": [
+        {
+            "name": "node",
+            "cleanup": [
+                "*"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://nodejs.org/dist/v7.9.0/node-v7.9.0.tar.gz",
+                    "sha256": "5cc131bb16f7ca688c29634a18b3c6a7816609a431a509f31baedf7caf25d626"
+                }
+            ]
+        },
+        {
+            "name": "riot-web",
+            "no-autogen": true,
+            "build-options": {
+                "build-args": [
+                    "--share=network"
+                ]
+            },
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://github.com/vector-im/riot-web/archive/v0.12.2.tar.gz",
+                    "sha256": "d31713f6efcd07366bf0d3b7364f547504c958a35d07a37bed809ef71789e2bf"
+                },
+                {
+                    "type": "file",
+                    "path": "flatpak-Makefile",
+                    "dest-filename": "Makefile"
+                },
+                {
+                    "type": "file",
+                    "path": "im.vector.Riot.desktop"
+                },
+                {
+                    "type": "file",
+                    "path": "im.vector.Riot.appdata.xml"
+                }
+            ]
+        }
+    ]
+}

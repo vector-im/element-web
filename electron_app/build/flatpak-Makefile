@@ -1,0 +1,23 @@
+
+ICON_FILES = $(wildcard electron_app/build/icons/*.png)
+ICON_SIZES = $(patsubst electron_app/build/icons/%.png,%,$(ICON_FILES))
+
+all:
+	npm install
+	npm run build
+	./node_modules/.bin/build -l --dir
+
+install:
+	install -dm755 /app/bin
+	cp -ar electron_app/dist/linux-unpacked/* /app/bin/
+	for size in $(ICON_SIZES) ; do \
+		install -dm755 /app/share/icons/hicolor/$${size}/apps/ ; \
+		install -Dm644 electron_app/build/icons/$${size}.png \
+			/app/share/icons/hicolor/$${size}/apps/im.vector.Riot.png ; \
+	done
+	install -dm755 /app/share/applications
+	install -Dm644 im.vector.Riot.desktop /app/share/applications
+	install -dm755 /app/share/appdata
+	install -Dm644 im.vector.Riot.appdata.xml /app/share/appdata
+
+.PHONY: install all
