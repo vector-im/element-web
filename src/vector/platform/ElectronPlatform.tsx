@@ -452,6 +452,19 @@ export default class ElectronPlatform extends VectorBasePlatform {
         return this._ipcCall('setMinimizeToTrayEnabled', enabled);
     }
 
+    supportsTrayIconBlink(): boolean {
+        // Things other than Mac support tray icon blinking
+        return !isMac;
+    }
+
+    async getTrayIconBlinkEnabled(): Promise<boolean> {
+        return this._ipcCall('getTrayIconBlinkEnabled');
+    }
+
+    async setTrayIconBlinkEnabled(enabled: boolean): Promise<void> {
+        return this._ipcCall('setTrayIconBlinkEnabled', enabled);
+    }
+
     async canSelfUpdate(): Promise<boolean> {
         const feedUrl = await this._ipcCall('getUpdateFeedUrl');
         return Boolean(feedUrl);
