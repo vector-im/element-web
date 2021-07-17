@@ -137,3 +137,9 @@ Voice messages are automatically downloaded to ensure they are ready for playbac
 
 Enables UI for turning on "do not disturb" mode for the current device. When DND mode is engaged, popups
 and notification noises are suppressed. Not perfect, but can help reduce noise.
+
+## Giphy Integration (`feature_giphy_integration`)
+
+Giphy API integration, that allows the users to send GIFs by searching with keywords, and selecting the one they like. It displays a new button in the composer next to the stickers and emojis. The GIFs are sent as files/attachments in the conversation.
+
+Associated PR: https://github.com/matrix-org/matrix-react-sdk/pull/5814
