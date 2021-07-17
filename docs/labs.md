@@ -34,6 +34,10 @@ and select "Pin".
 An experimental approach for supporting custom status messages across DMs. To set a status, click on
 your avatar next to the message composer.
 
+## Customizable keybindings (`feature_keybindings`)
+
+A WIP experimental option for customizable keybindings. A new keybindings tab should appear in the settings dialog.
+
 ## Custom tags (`feature_custom_tags`)
 
 An experimental approach for dealing with custom tags. Custom tags will appear in the bottom portion
